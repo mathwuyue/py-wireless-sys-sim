@@ -35,4 +35,12 @@ def cal_dist_3d(p1, p2):
     Returns:
     numpy array of distances.
     """
-    return np.array(map(euclidean, p1, p2))
+    # check scalar
+    if len(p1.shape) == 1 and len(p2.shape) == 1:
+        return euclidean(p1, p2)
+    elif len(p1.shape) == 1:
+        return np.array(map(lambda x: euclidean(x, p1), p2))
+    elif len(p2.shape) == 1:
+        return np.array(map(lambda x: euclidean(x, p2), p1))
+    else:
+        return np.array(map(euclidean, p1, p2))
