@@ -2,28 +2,55 @@ import numpy as np
 from core.positions import cal_dist_3d
 
 
+class KeplerElement(object):
+    """
+    See: https://en.wikipedia.org/wiki/Orbital_elements
+    """
+    def __init__(self, e, a, i, omega, av, epoch):
+        """
+        Args:
+        e (float): eccentricity. Circle is 0.
+        a (float): semimajor axis. Radius of circle
+        i (float): inclination.
+        omega (float): longitude of the ascending node
+        av (float): Circle: angular velocity
+        epoch (float): Mean anomaly at epoch.
+        """
+        self.e = e
+        self.a = a
+        self.i = i
+        self.omega = omega
+        self.av = av
+        self.epoch = epoch
+
+
 class Satellite(object):
-    """ The clasatellite for creating a satellite system. """
-    def __init__(self, satellites=None, antennas=None, stations=None):
+    """
+    The class for creating a satellite system.  It is assumed that all satellites have a circular orbit.
+    """
+    def __init__(self, kes=None, antennas=None, intra_bw=0, earth_bw=0, init_pos=None, stations=None):
         """
         Kwargs:
-        satellites (numpy array): positions of satellites
-        speeds (numpy array): np.array([[1,2,3], [2,3,4]])
+        kes (list): array of Kepler elements of kes
         antennas (list): list of antennas
         stations (list): list of earth stations
+        init_pos (list): initial positions of satellites (in sphercial coordination system)
         .. note::
-        satellites should have same shape as speeds
+        kes should have same shape as init_pos
         """
-        self.satellites = satellites
+        self.kes = kes
         self.antennas = antennas
         self.stations = stations
+        self.intra_bw = intra_bw
+        self.earth_bw = earth_bw
+        self.init_pos = init_pos
 
-    def add_satellite(self, satellites, antennas):
-        if self.satellites is None:
-            self.satellites = satellites
+    def add_satellite(self, kes, antennas):
+        if self.kes is None:
+            self.kes = kes
             self.antennas = antennas
         else:
-            self.satellites = np.append(self.satellites, satellites)
+            self.kes = np.append(self.kes, kes)
             self.antennas.append(antennas)
 
     def add_stations(self, stations):
@@ -32,12 +59,17 @@ class Satellite(object):
     def update_pos(self, t):
         pass
 
-    def cal_satellites_topo(self):
+    def cal_satellite_topo(self):
         pass
 
 
 class IridiumSatellite(Satellite):
-    def __init__(self):
-        super(IridiumSatellite, self).__init__()
+    def __init__(self, intra_bw=1, earth_bw=1, stations=None):
+        """
+        Kwargs:
+        intra_bw (float): in MHz
+        earth_bw (float): in MHz
+        """
+        super(IridiumSatellite, self).__init__(intra_bw=intra_bw, earth_bw=earth_bw, stations=stations)
 
-    def cal_satellites_topo(self):
+    def cal_satellite_topo(self):
