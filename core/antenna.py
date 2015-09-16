@@ -12,7 +12,7 @@ class Antenna(object):
         self.max_tp = 0
 
     def cal_gain(self):
-        return gain
+        return self.gain
 
 
 class ParabolicAntenna(Antenna):
@@ -22,6 +22,7 @@ class ParabolicAntenna(Antenna):
         f (float): in GHz,
         d (float): in m,
         ea (float): efficiency
+        max_tp (float): dBW
         """
         super(ParabolicAntenna, self).__init__(f, max_tp=max_tp)
         self.c = 3.0e8

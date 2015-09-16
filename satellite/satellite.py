@@ -121,8 +121,26 @@ class IridiumSatellite(Satellite):
 
 
 class GeoSatellite(Satellite):
-    def __init__(self, intra_bw=1, earth_bw=1, n=3, stations=None):
+    def __init__(self, n=3, intra_bw=1, earth_bw=1, stations=None):
         super(GeoSatellite, self).__init__(intra_bw=intra_bw, earth_bw=earth_bw, stations=stations)
         self.kes = [KeplerElement(0, 42164e3, 0, 0, 0, 0) for i in range(n)]
         self.pos = np.array([[42164e3, np.pi/2, i*2*np.pi/n] for i in range(n)])
         self.antennas = [SatelliteAntenna(27.5, 6, 30, 0, 4.2) for i in range(n)]
+
+
+class EarthStation(object):
+    def __init__(self, bw=1, pos=None, antennas=None):
+        """
+        Kwargs:
+        bw (float): MHz
+        pos (numpy array): (r, i, theta)
+        antennas (list)
+        .. note::
+        pos have same rows as antennas, except that pos is not None but antennas is None, in which case antennas will be set to the array of default parabolicantennas. 
+        """
+        self.bw = bw
+        self.pos = pos
+        if pos is not None and antennas is None:
+            self.antennas = [ParabolicAntenna() for p in self.pos]
+        else:
+            self.antennas = antennas
