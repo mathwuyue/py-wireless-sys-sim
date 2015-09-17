@@ -30,6 +30,9 @@ class ParabolicAntenna(Antenna):
         self.gain = (np.pi*d*f*1.0e9/self.c)**2 * ea
         self.theta_3db = (k*self.c/(f*1e9*d))/d
 
+    def __getitem__(self, key):
+        return self.__dict__[key]
+
     def cal_gain(self, alpha_t):
         return self.gain - 0.00245*(alpha_t*self.d*self.f*1e9/self.c)**2
 
@@ -39,3 +42,6 @@ class SatelliteAntenna(Antenna):
         super(SatelliteAntenna, self).__init__(gain=gain, theta_3db=theta_3db, max_tp=max_tp)
         self.intra_f = intra_f
         self.earth_f = earth_f
+
+    def __getitem__(self, key):
+        return self.__dict__[key]

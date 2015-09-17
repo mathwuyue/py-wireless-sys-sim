@@ -1,21 +1,19 @@
 import numpy as np
 
 
-def cal_channel_gain(tr, rv, n_channel=1,
-                     dist_func=None, dist_args=None,
-                     pl_func=None, pl_args=None,
-                     fading_func=None, fading_args=None,
-                     shadowing_func=None, shadowing_args=None):
+def cal_channel_gain(tr, rv, n, n_channel=1,
+                     dist_func=None, dist_args=[],
+                     pl_func=None, pl_args=[],
+                     fading_func=None, fading_args=[],
+                     shadowing_func=None, shadowing_args=[]):
     if tr.shape != rv.shape:
         return None
-    if len(tr.shape) == 1:
-        n = 1
-    else:
-        n = tr.shape[0]
-    d = dist_func(tr, rv)
-    pl = pl_func(d, pl_args)
-    h = fading_func(fading_args+[1, n_channel*n])
-    s = shadowing_func(shadowing_args+[1, n])
+    d = dist_func(tr, rv, *dist_args)
+    pl = pl_func(d, *pl_args)
+    fading_args = fading_args + [n*n_channel] if n*n_channel > 1 else fading_args
+    h = fading_func(*fading_args)
+    shadowing_args = shadowing_args + [n] if n > 1 else shadowing_args
+    s = shadowing_func(*shadowing_args)
     return np.kron(10**((-pl + s)/10), np.ones((1, n_channel))) * (abs(h)**2)
 
 

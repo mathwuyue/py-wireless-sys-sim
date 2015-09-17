@@ -60,10 +60,11 @@ class Satellite(object):
     def update_pos(self, t):
         if self.pos is None:
             return
-        if type(kes) is not list:
+        if type(self.kes) is not list:
             self.pos = np.array([self.pos[0], self.pos[1]+self.kes.av*t, self.pos[2]])
-        self.pos = np.array([[p[0], p[1]+ke.av*t, p[2]]
-                             for p, ke in zip(self.pos, self.kes)])
+        else:
+            self.pos = np.array([[p[0], p[1]+ke.av*t, p[2]]
+                                 for p, ke in zip(self.pos, self.kes)])
 
     def to_cartesian(self, idx=None):
         if self.pos is None:
@@ -80,6 +81,16 @@ class Satellite(object):
         return np.array([[p[0]*np.sin(p[1])*np.sin(p[2]),
                           p[0]*np.sin(p[1])*np.cos(p[2]),
                           p[0]*np.cos(p[1])] for p in rpos])
+
+    def get_antenna_param(self, idx=None, param=None):
+        if self.pos is None:
+            return None
+        if type(idx) is int:
+            return self.antennas[idx][param]
+        if idx is None:
+            return np.array([a[param] for a in self.antennas])
+        else:
+            return np.array([self.antennas[i][param] for i in idx])
 
     def cal_satellite_topo(self):
         pass
@@ -144,3 +155,32 @@ class EarthStation(object):
             self.antennas = [ParabolicAntenna() for p in self.pos]
         else:
             self.antennas = antennas
+
+    def update_pos(self, t):
+        pass
+
+    def to_cartesian(self, idx=None):
+        if self.pos is None:
+            return None
+        if type(idx) is int:
+            p = self.pos
+            return np.array([self.p[0]*np.sin(self.p[1])*np.sin(self.p[2]),
+                             self.p[0]*np.sin(self.p[1])*np.cos(self.p[2]),
+                             self.p[0]*np.cos(self.p[1])])
+        if idx is None:
+            rpos = self.pos
+        else:
+            rpos = self.pos[idx, :]
+        return np.array([[p[0]*np.sin(p[1])*np.sin(p[2]),
+                          p[0]*np.sin(p[1])*np.cos(p[2]),
+                          p[0]*np.cos(p[1])] for p in rpos])
+
+    def get_antenna_param(self, idx=None, param=None):
+        if self.pos is None:
+            return None
+        if type(idx) is int:
+            return self.antennas[idx][param]
+        if idx is None:
+            return np.array([a[param] for a in self.antennas])
+        else:
+            return np.array([self.antennas[i][param] for i in idx])

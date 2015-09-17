@@ -1,7 +1,72 @@
 import numpy as np
 from core.statchannel import gen_rician, gen_logNshadowing
 from core.position import cal_dist_3d
-from core.pathloss import gen_fiirs
+from core.pathloss import cal_fiirs
+from core.communicaiton import cal_recv_power
 
 
-class SatelliteComm(object)
+INTER_COMM = 0
+UPLINK = 1
+DOWNLINK = 2
+
+
+class SatelliteComm(object):
+    """
+    This is the class for satellite communicaitons
+    """
+    def __init__(self, satellite_system):
+        """
+        Args:
+        satellite_system (dict): dict contains all the satellite systems in the simulation
+        """
+        self.satellites = satellite_system
+        self.earth_stations = {}
+        for key, ss in self.satellites.iteritems():
+            self.earth_stations[key] = ss.stations
+
+    def update_pos(self, t):
+        pass
+
+    def comm(self, start, dest, n, comm_t=INTER_COMM):
+        """
+        Args:
+        start (dict): {system_key: idx_list (list, None for all)},
+        end (dict): {system_key: idx_list (list, None for all)}
+        .. note::
+        The elements in start and end should be consistent, e.g. all elements in start/end are satellites or earth stations.
+
+        Returns:
+        Shannon capacity (numpy array): array of the shannon capacity between all trs and rvs.
+        """
+        tr_pos = np.array([[0, 0, 0]])
+        rv_pos = np.array([[0, 0, 0]])
+        f = np.array([])
+        gt = np.array([])
+        gr = np.array([])
+        for key, idx in start.iteritems():
+            if comm_t == INTER_COMM:
+                s = self.satellites[key]
+                np.append(f, s.get_antenna_param(idx, 'intra_f'))
+            elif comm_t == DOWNLINK:
+                s = self.satellites[key]
+                np.append(f, s.get_antenna_param(idx, 'earth_f'))
+            else:
+                s = self.satellites[key].stations
+                np.append(f, s.get_antenna_param(idx, 'f'))
+            np.append(tr_pos, s.to_cartesian(idx))
+            np.append(gt, s.get_antenna_param(idx, 'gain'))
+        for key, idx in dest.iteritems():
+            if comm_t == INTER_COMM or DOWNLINK:
+                e = self.satellites[key]
+            else:
+                e = self.satellites[key].stations
+            np.append(rv_pos, e.to_cartesian(idx))
+            np.append(gr, e.get_antenna_param(idx, 'gain'))
+        tr_pos = tr_pos[1:, :]
+        rv_pos = rv_pos[1:, :]
+        cal_recv_power(tr_pos, rv_pos, n, 1,
+                       dist_func=cal_dist_3d,
+                       pl_func=cal_fiirs, pl_args=[f, gt, gr],
+                       fading_func=gen_rician, fading_args=[10, 1],
+                       shadowing_func=gen_logNshadowing, shadowing_args=[4])
+    
