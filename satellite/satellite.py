@@ -1,5 +1,5 @@
 import numpy as np
-from core.positions import cal_dist_3d
+from core.positions import cal_dist_3d, to_cartesian
 from core.antenna import SatelliteAntenna, ParabolicAntenna
 
 
@@ -29,7 +29,7 @@ class Satellite(object):
     """
     The class for creating a satellite system.  It is assumed that all satellites have a circular orbit.
     """
-    def __init__(self, kes=None, antennas=None, intra_bw=0, earth_bw=0, init_pos=None, stations=None):
+    def __init__(self, n=0, kes=None, antennas=None, intra_bw=0, earth_bw=0, init_pos=None, stations=None):
         """
         Kwargs:
         kes (list): array of Kepler elements of kes
@@ -39,6 +39,7 @@ class Satellite(object):
         .. note::
         kes, init_pos and antennas should have same number of rows.
         """
+        self.n = n
         self.kes = kes
         self.antennas = antennas
         self.stations = stations
@@ -66,21 +67,14 @@ class Satellite(object):
             self.pos = np.array([[p[0], p[1]+ke.av*t, p[2]]
                                  for p, ke in zip(self.pos, self.kes)])
 
-    def to_cartesian(self, idx=None):
+    def satellite_pos(self, idx=None):
         if self.pos is None:
             return None
-        if type(idx) is int:
-            p = self.pos
-            return np.array([self.p[0]*np.sin(self.p[1])*np.sin(self.p[2]),
-                             self.p[0]*np.sin(self.p[1])*np.cos(self.p[2]),
-                             self.p[0]*np.cos(self.p[1])])
         if idx is None:
             rpos = self.pos
         else:
             rpos = self.pos[idx, :]
-        return np.array([[p[0]*np.sin(p[1])*np.sin(p[2]),
-                          p[0]*np.sin(p[1])*np.cos(p[2]),
-                          p[0]*np.cos(p[1])] for p in rpos])
+        return to_cartesian(rpos)
 
     def get_antenna_param(self, idx=None, param=None):
         if self.pos is None:
@@ -103,7 +97,7 @@ class IridiumSatellite(Satellite):
         intra_bw (float): in MHz
         earth_bw (float): in MHz
         """
-        super(IridiumSatellite, self).__init__(intra_bw=intra_bw, earth_bw=earth_bw, stations=stations)
+        super(IridiumSatellite, self).__init__(n=66, intra_bw=intra_bw, earth_bw=earth_bw, stations=stations)
         self.kes = []
         self.pos = []
         self.antennas = []
@@ -119,7 +113,7 @@ class IridiumSatellite(Satellite):
 
     def cal_satellite_topo(self):
         topo = []
-        cpos = self.to_cartesian()
+        cpos = self.satellite_pos()
         for i in range(66):
             self.row = []
             for j in range(66):
@@ -133,7 +127,7 @@ class IridiumSatellite(Satellite):
 
 class GeoSatellite(Satellite):
     def __init__(self, n=3, intra_bw=1, earth_bw=1, stations=None):
-        super(GeoSatellite, self).__init__(intra_bw=intra_bw, earth_bw=earth_bw, stations=stations)
+        super(GeoSatellite, self).__init__(n=n, intra_bw=intra_bw, earth_bw=earth_bw, stations=stations)
         self.kes = [KeplerElement(0, 42164e3, 0, 0, 0, 0) for i in range(n)]
         self.pos = np.array([[42164e3, np.pi/2, i*2*np.pi/n] for i in range(n)])
         self.antennas = [SatelliteAntenna(27.5, 6, 30, 0, 4.2) for i in range(n)]
@@ -159,21 +153,14 @@ class EarthStation(object):
     def update_pos(self, t):
         pass
 
-    def to_cartesian(self, idx=None):
+    def station_pos(self, idx=None):
         if self.pos is None:
             return None
-        if type(idx) is int:
-            p = self.pos
-            return np.array([self.p[0]*np.sin(self.p[1])*np.sin(self.p[2]),
-                             self.p[0]*np.sin(self.p[1])*np.cos(self.p[2]),
-                             self.p[0]*np.cos(self.p[1])])
         if idx is None:
             rpos = self.pos
         else:
             rpos = self.pos[idx, :]
-        return np.array([[p[0]*np.sin(p[1])*np.sin(p[2]),
-                          p[0]*np.sin(p[1])*np.cos(p[2]),
-                          p[0]*np.cos(p[1])] for p in rpos])
+        return to_cartesian(rpos)
 
     def get_antenna_param(self, idx=None, param=None):
         if self.pos is None:

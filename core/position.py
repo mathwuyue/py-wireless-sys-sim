@@ -44,3 +44,14 @@ def cal_dist_3d(p1, p2):
         return np.array(map(lambda x: euclidean(x, p2), p1))
     else:
         return np.array(map(euclidean, p1, p2))
+
+
+def to_cartesian(ps):
+    if len(ps.shape) == 1:
+        return np.array([ps[0]*np.sin(ps[1])*np.sin(ps[2]),
+                         ps[0]*np.sin(ps[1])*np.cos(ps[2]),
+                         ps[0]*np.cos(ps[1])])
+    else:
+        return np.array([[p[0]*np.sin(p[1])*np.sin(p[2]),
+                          p[0]*np.sin(p[1])*np.cos(p[2]),
+                          p[0]*np.cos(p[1])] for p in ps])

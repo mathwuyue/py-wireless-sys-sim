@@ -1,5 +1,11 @@
-from satellite.test import cal_fading
+import numpy as np
+from satellite.communicaiton import SatelliteComm
+from satellite.satellite import IridiumSatellite, GeoSatellite, EarthStation
+
+
+def main():
+    leos = IridiumSatellite()
 
 
 if __name__ == '__main__':
-    print cal_fading()
+    main()

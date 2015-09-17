@@ -16,7 +16,7 @@ class Antenna(object):
 
 
 class ParabolicAntenna(Antenna):
-    def __init__(self, f=6.0, d=3.0, k=70, ea=0.6, max_tp=20):
+    def __init__(self, f=6.0, d=3.0, k=70, ea=0.6, max_tp=30):
         """
         Args:
         f (float): in GHz,
@@ -38,7 +38,7 @@ class ParabolicAntenna(Antenna):
 
 
 class SatelliteAntenna(Antenna):
-    def __init__(self, intra_f, earth_f, gain, theta_3db, max_tp):
+    def __init__(self, intra_f, earth_f, gain, theta_3db=0, max_tp=20):
         super(SatelliteAntenna, self).__init__(gain=gain, theta_3db=theta_3db, max_tp=max_tp)
         self.intra_f = intra_f
         self.earth_f = earth_f
