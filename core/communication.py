@@ -17,14 +17,33 @@ def cal_channel_gain(tr, rv, n, n_channel=1,
     return np.kron(10**((-pl + s)/10), np.ones((1, n_channel))) * (abs(h)**2)
 
 
-def cal_recv_power(tr, rv, tp, n_channel,
+def cal_recv_power(tr, rv, tp, n, n_channel,
                    dist_func, dist_args,
                    pl_func, pl_args,
                    fading_func, fading_args,
                    shadowing_func, shadowing_args):
     return np.kron(tp, np.ones((1, n_channel))) *\
-        cal_channel_gain(tr, rv, n_channel,
+        cal_channel_gain(tr, rv, n, n_channel,
                          dist_func, dist_args,
                          pl_func, pl_args,
                          fading_func, fading_args,
                          shadowing_func, shadowing_args)
+
+
+def cal_thermal_noise(bw, t):
+    K = 1.3806488e-23
+    return bw*t*K
+
+
+def cal_SINR(sp, ip, noise):
+    """
+    Args:
+    sp (float or numpy array): signal power
+    ip (float or numpy array): interference power
+    """
+    return sp / (ip+noise)
+
+
+def cal_shannon_cap(bw, sp, ip=0, noise=0):
+    sinr = cal_SINR(sp, ip, noise)
+    return bw * np.log2(1+sinr)
