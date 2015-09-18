@@ -74,7 +74,7 @@ class SatelliteComm(object):
             np.append(gr, e.get_antenna_param(idx, 'gain'))
         tr_pos = tr_pos[1:, :]
         rv_pos = rv_pos[1:, :]
-        rp = cal_recv_power(tr_pos, rv_pos, 10**(), n, 1,
+        rp = cal_recv_power(tr_pos, rv_pos, 10**(tp/10), n, 1,
                             dist_func=cal_dist_3d,
                             pl_func=cal_fiirs, pl_args=[f, gt, gr],
                             fading_func=gen_rician, fading_args=[10, 1],
@@ -114,7 +114,29 @@ class SatelliteComm(object):
         Return:
         throughput (numpy array): numpy.array([1,2,3,4...])
         """
-        ss_idx, idx = satellite
+        # ss_idx: satellite system idx. s_idx: satellite idx in system
+        ss_idx, s_idx = satellite
+        s_pos = self.satellites[ss_idx].satellite_pos(s_idx)
+        bw = self.satellites[ss_idx].earth_bw
+        f = self.satellites[ss_idx].get_antenna_param(s_idx, 'earth_f')
         if comm_t == UPLINK:
-            noise = cal_thermal_noise()
-            tp = self.satellites
+            noise = cal_thermal_noise(bw, 2.73)
+            tp = ue.tp
+            tr_pos = ue.pos
+            rv_pos = s_pos
+            gt = 0
+            gr = self.satellites[ss_idx].get_antenna_param(s_idx, 'gain')
+        else:
+            noise = cal_thermal_noise(bw, 290)
+            tp = self.satellites[ss_idx].get_antenna_param(s_idx, 'max_tp')
+            tr_pos = s_pos
+            rv_pos = ue.pos
+            gt = self.satellites[ss_idx].get_antenna_param(s_idx, 'gain')
+            gr = 0
+        rp = cal_recv_power(tr_pos, rv_pos, 10**(tp/10), 1, 1,
+                            dist_func=cal_dist_3d,
+                            pl_func=cal_fiirs, pl_args=[f, gt, gr],
+                            fading_func=gen_rician, fading_args=[10, 1],
+                            shadowing_func=gen_logNshadowing, shadowing_args=[4])
+        throughput = cal_shannon_cap(bw, rp, noise=noise)
+        return rp, throughput
