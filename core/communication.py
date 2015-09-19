@@ -14,7 +14,8 @@ def cal_channel_gain(tr, rv, n, n_channel=1,
     h = fading_func(*fading_args)
     shadowing_args = shadowing_args + [n] if n > 1 else shadowing_args
     s = shadowing_func(*shadowing_args)
-    return np.kron(10**((-pl + s)/10), np.ones((1, n_channel))) * (abs(h)**2)
+    tmp = 10**((-pl + s)/10) if n_channel == 1 else np.kron(10**((-pl + s)/10), np.ones(n_channel))
+    return tmp * (abs(h)**2)
 
 
 def cal_recv_power(tr, rv, tp, n, n_channel,
@@ -22,12 +23,12 @@ def cal_recv_power(tr, rv, tp, n, n_channel,
                    pl_func, pl_args,
                    fading_func, fading_args,
                    shadowing_func, shadowing_args):
-    return np.kron(tp, np.ones((1, n_channel))) *\
-        cal_channel_gain(tr, rv, n, n_channel,
-                         dist_func, dist_args,
-                         pl_func, pl_args,
-                         fading_func, fading_args,
-                         shadowing_func, shadowing_args)
+    tp = tp if n_channel == 1 else np.kron(tp, np.ones(n_channel))
+    return tp * cal_channel_gain(tr, rv, n, n_channel,
+                                 dist_func, dist_args,
+                                 pl_func, pl_args,
+                                 fading_func, fading_args,
+                                 shadowing_func, shadowing_args)
 
 
 def cal_thermal_noise(bw, t):

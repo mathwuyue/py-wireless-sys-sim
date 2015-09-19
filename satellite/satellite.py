@@ -1,5 +1,5 @@
 import numpy as np
-from core.positions import cal_dist_3d, to_cartesian
+from core.position import cal_dist_3d, to_cartesian
 from core.antenna import SatelliteAntenna, ParabolicAntenna
 
 
@@ -79,7 +79,7 @@ class Satellite(object):
     def get_antenna_param(self, idx=None, param=None):
         if self.pos is None:
             return None
-        if type(idx) is int:
+        if type(idx) is np.int64 or type(idx) is int:
             return self.antennas[idx][param]
         if idx is None:
             return np.array([a[param] for a in self.antennas])
@@ -165,7 +165,7 @@ class EarthStation(object):
     def get_antenna_param(self, idx=None, param=None):
         if self.pos is None:
             return None
-        if type(idx) is int:
+        if type(idx) is int or type(idx) is np.int64:
             return self.antennas[idx][param]
         if idx is None:
             return np.array([a[param] for a in self.antennas])
