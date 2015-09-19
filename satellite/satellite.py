@@ -1,6 +1,7 @@
 import numpy as np
 from core.position import cal_dist_3d, to_cartesian
 from core.antenna import SatelliteAntenna, ParabolicAntenna
+import networkx as nx
 
 
 class KeplerElement(object):
@@ -46,6 +47,7 @@ class Satellite(object):
         self.intra_bw = intra_bw
         self.earth_bw = earth_bw
         self.pos = init_pos
+        self.topo = None
 
     def add_satellite(self, kes, antennas):
         if self.kes is None:
@@ -86,7 +88,7 @@ class Satellite(object):
         else:
             return np.array([self.antennas[i][param] for i in idx])
 
-    def cal_satellite_topo(self):
+    def get_satellite_topo(self):
         pass
 
 
@@ -111,18 +113,20 @@ class IridiumSatellite(Satellite):
                     self.pos.append([7136e3, np.pi/11+2*np.pi/11*j, i*np.pi/6])
         self.pos = np.array(self.pos)
 
-    def cal_satellite_topo(self):
-        topo = []
-        cpos = self.satellite_pos()
+    def get_satellite_topo(self):
+        if self.topo is not None:
+            return self.topo
+        self.topo = nx.Graph()
+        self.topo.add_nodes_from(range(66))
         for i in range(66):
-            self.row = []
-            for j in range(66):
-                if i == j:
-                    self.row.append(np.inf)
-                if j == i-1 or j == i+1 or j == i+11 or j == i-11:
-                    self.row.append(cal_dist_3d(cpos[i, :], cpos[j, :]))
-            topo.append(self.row)
-        return np.array(topo)
+            if i % 11 != 0:
+                self.topo.add_edge(i-1, i)
+            if i+1 != 10:
+                self.topo.add_edge(i+1, i)
+            if i+11 < 65:
+                self.topo.add_edge(i+11, i)
+            if i-11 >= 0:
+                self.topo.add_edge(i-11, i)
 
 
 class GeoSatellite(Satellite):

@@ -48,3 +48,16 @@ def cal_SINR(sp, ip, noise):
 def cal_shannon_cap(bw, sp, ip=0, noise=0):
     sinr = cal_SINR(sp, ip, noise)
     return bw * np.log2(1+sinr)
+
+
+def cal_transmission_time(throughput, packet=1e3, period=1e-3):
+    """
+    Args:
+    throughput (float): bps
+    packet (float): bits
+    period (float): time slot (s)
+
+    Return:
+    Total transmission time (float): in s
+    """
+    pass
