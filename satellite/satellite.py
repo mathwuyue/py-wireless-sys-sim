@@ -121,9 +121,9 @@ class IridiumSatellite(Satellite):
         for i in range(66):
             if i % 11 != 0:
                 self.topo.add_edge(i-1, i)
-            if i+1 != 10:
+            if i % 11 != 10:
                 self.topo.add_edge(i+1, i)
-            if i+11 < 65:
+            if i+11 < 66:
                 self.topo.add_edge(i+11, i)
             if i-11 >= 0:
                 self.topo.add_edge(i-11, i)
