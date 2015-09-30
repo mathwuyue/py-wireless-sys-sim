@@ -127,6 +127,7 @@ class IridiumSatellite(Satellite):
                 self.topo.add_edge(i+11, i)
             if i-11 >= 0:
                 self.topo.add_edge(i-11, i)
+        return self.topo
 
 
 class GeoSatellite(Satellite):
