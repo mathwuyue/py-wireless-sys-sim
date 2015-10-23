@@ -7,7 +7,13 @@ def gen_uni_circ_pos(center, r, n):
     r1 = np.random.rand(n) * r
     r2 = np.random.rand(n) * r
     rpos = np.maximum(r1, r2)
-    return rpos * np.exp(theta*1j)
+    return rpos * np.exp(theta*1j) + center
+
+
+def gen_uni_ring_pos(center, r1, r2, n):
+    theta = np.random.rand(n) * 2 * np.pi
+    r = np.random.rand(n) * (r2-r1) + r1
+    return r * np.exp(theta*1j) + center
 
 
 def cal_dist_2d(p1, p2):
