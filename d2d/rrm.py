@@ -1,3 +1,6 @@
+import operator
+import itertools
+
 import numpy as np
 from core import cal_thermal_noise, cal_umi_nlos, cal_umi_exp_los
 
@@ -82,4 +85,50 @@ Underlaying Cellular Networks)
     return _argmax(opt_tp_pairs)
 
 
-def cal_D2D_ergodic_tp()
+def cal_D2D_ergodic_tp(d2d_tr, d2d_rp, cc_ue, rc, a_gain_c, a_gian_d,
+                       k_los, k_nlos, alpha_los, alpha_nlos, l):
+    def _f(x):
+        return x*np.log2(x)/(np.log(2)*(x-1))
+    a_c = a_gain_c/a_gain_d       # antenna gain from CC to D2D
+    a_d = 1                       # antenna gain from D2D to BS
+    d1_d = np.abs(d2d_tr - d2d_rp)
+    d_d2d_bs = np.abs(d2d_tr)
+    d_cc = np.abs(cc_ue)
+    d2_d = np.abs(cc_ue - d2d_rp)
+
+    # M, N
+    def _m1(a, d1, d2):
+        return a*(d1/d2)**(-alpha_los)
+
+    def _m2(a, d1, d2):
+        return a*k_los*d1**(-alpha_los) / (k_nlos*d2**(-alpha_nlos))
+
+    def _m3(a, d1, d2):
+        return a*k_nlos*d1**(-alpha_nlos) / (k_los*d2**(-alpha_los))
+
+    def _m4(a, d1, d2):
+        return a*(d1/d2)**(-alpha_nlos)
+
+    def _n1(d1, d2):
+        return np.exp(-(d1**2+d2**2)/l**2)
+
+    def _n2(d1, d2):
+        return np.exp(-d1**2/l**2) * (1-np.exp(-d2**2/l**2))
+
+    def _n3(d1, d2):
+        return np.exp(-d2**2/l**2) * (1-np.exp(-d1**2/l**2))
+
+    def _n4(d1, d2):
+        return (1-np.exp(-d1**2/l**2)) * (1-np.exp(-d2**2/l**2))
+
+    # equation
+    def _sum(func, *args):
+        return reduce(operator.add, itertools.imap(func, *args), 0)
+    
+    def _f_beta_delta(beta):
+        delta = (rc - _sum(lambda x, y: y*_f(x/beta))) / \
+                _sum(lambda x, y: y*_f(beta*x)-y*_f(x/beta))
+
+        lambda1 = _sum()
+    
+    
