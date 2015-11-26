@@ -45,3 +45,17 @@ class SatelliteAntenna(Antenna):
 
     def __getitem__(self, key):
         return self.__dict__[key]
+
+
+class LTEBSAntenna(Antenna):
+    def __init__(self, f=2.4, phi_3db=7*np.pi/18, theta_3db=np.pi/18, etilt=np.pi/12, max_tp=16.0):
+        super(LTEBSAntenna, self).__init__(f, theta_3db=theta_3db, max_tp=max_tp)
+        self.phi_3db = phi_3db
+        self.am = 25
+        self.sla = 20
+        self.etilt = etilt
+
+    def cal_gain(self, phi, theta):
+        a_phi = -np.min(12*(phi/self.phi_3db)**2, self.am)
+        a_v = -np.min(12*((theta-self.etilt)/self.theta_3db)**2, self.sla)
+        return -np.min(-(a_phi+a_v), self.am)

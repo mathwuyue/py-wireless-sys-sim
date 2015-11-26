@@ -1,5 +1,5 @@
 import numpy as np
-from core import cal_thermal_noise, cal_umi_nlos
+from core import cal_thermal_noise, cal_umi_nlos, cal_umi_exp_los
 
 
 def cal_D2D_basic_tp(d2d_ues, g_d2d_bs, kappa, bw, alpha, freq):
