@@ -1,6 +1,6 @@
 import numpy as np
 from core.position import cal_dist_3d, to_cartesian
-from core.antenna import SatelliteAntenna, ParabolicAntenna
+from core.antenna import SatelliteAntenna
 import networkx as nx
 
 
@@ -138,41 +138,18 @@ class GeoSatellite(Satellite):
         self.antennas = [SatelliteAntenna(27.5, 6, 30, 0, 4.2) for i in range(n)]
 
 
-class EarthStation(object):
-    def __init__(self, bw=1, pos=None, antennas=None):
-        """
-        Kwargs:
-        bw (float): MHz
-        pos (numpy array): (r, i, theta)
-        antennas (list)
-        .. note::
-        pos have same rows as antennas, except that pos is not None but antennas is None, in which case antennas will be set to the array of default parabolicantennas. 
-        """
-        self.bw = bw
-        self.pos = pos
-        if pos is not None and antennas is None:
-            self.antennas = [ParabolicAntenna() for p in self.pos]
-        else:
-            self.antennas = antennas
+class SimpleSatellite(Satellite):
+    def __init__(self, intra_bw=1, earth_bw=1, stations=None):
+        super(SimpleSatellite, self).__init__(n=11, intra_bw=intra_bw, earth_bw=earth_bw, stations=stations)
+        self.kes = []
+        self.pos = []
+        self.antennas = []
+        for i in range(11):
+            self.kes.append(KeplerElement(0, 7136e3, np.pi/2, 0, 0, 0))
+            self.antennas.append(SatelliteAntenna(27.5, 6, 30, 0, 4.2))
+            if i % 2 == 0:
+                self.pos.append([7136e3, 2*np.pi/11*j, i*np.pi/6])
+            else:
+                self.pos.append([7136e3, np.pi/11+2*np.pi/11*j, i*np.pi/6])
+        self.pos = np.array(self.pos)
 
-    def update_pos(self, t):
-        pass
-
-    def station_pos(self, idx=None):
-        if self.pos is None:
-            return None
-        if idx is None:
-            rpos = self.pos
-        else:
-            rpos = self.pos[idx, :]
-        return to_cartesian(rpos)
-
-    def get_antenna_param(self, idx=None, param=None):
-        if self.pos is None:
-            return None
-        if type(idx) is int or type(idx) is np.int64:
-            return self.antennas[idx][param]
-        if idx is None:
-            return np.array([a[param] for a in self.antennas])
-        else:
-            return np.array([self.antennas[i][param] for i in idx])

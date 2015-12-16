@@ -1,8 +1,6 @@
 import numpy as np
-from core.statchannel import gen_rician, gen_logNshadowing
-from core.position import cal_dist_3d, to_cartesian
-from core.pathloss import cal_fiirs
-from core.communication import cal_recv_power, cal_thermal_noise, cal_shannon_cap
+from core import gen_rician, gen_logNshadowing, cal_dist_3d, to_cartesian, \
+    cal_fiirs, cal_recv_power, cal_thermal_noise, cal_shannon_cap
 
 
 INTRA_COMM = 0
