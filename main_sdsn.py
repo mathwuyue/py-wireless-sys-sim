@@ -1,35 +1,80 @@
 import numpy as np
-from core import gen_rician, gen_logNshadowing, cal_dist_2d, cal_thermal_noise,\
-    cal_recv_power, SatelliteAntenna
-from satellite import Satellite
+import scipy.stats
+import matplotlib.pyplot as plt
+from satellite import Satellite, SatelliteComm, GeoSatellite
+from core import EarthStation, SatelliteAntenna, UE, cal_dist_3d, to_cartesian
 
 G = 6.67e-11
 M_EARTH = 5.97e24
 DELTA_T = 1e-3
 HEIGHT = (np.linspace(160, 2000, 8) + 6371) * 1e3
-V = np.sqrt(G*M_EARTH/HEIGHT)
+AV = np.sqrt(G*M_EARTH/(HEIGHT**3))
 LOOP = 1
 PB = 0.127
 PB_P = 0.08
+R_H = 7800*8
+R_RE = 15000*8
+R_H_SDN = 1500*8
 
 
 class LEOSystem(Satellite):
-    def __init__(self, height, n=2, intra_bw=1, earth_bw=1):
-        super(LEOSystem, self).__init__(n)
-        delta_s = 2 * np.pi * height / 12.0
-        self.pos = np.array([-i*delta_s + height*1j for i in range(n)])
-        self.antennas = [SatelliteAntenna(27.5, 6, 30, 0, 4.2) for i in range(n)]
+    def __init__(self, height, av):
+        super(LEOSystem, self).__init__(n=2)
+        self.height = height
+        self.av = av
+        self.pos = np.array([[height, np.pi/2, np.pi/2+i*np.pi/6] for i in range(self.n)])
+        self.antennas = [SatelliteAntenna(27.5, 6, 30, 0, 4.2) for i in range(self.n)]
 
-    def update_pos(self, v, t):
-        return self.pos + v * t
-
-
-# check handover condition
-def check_handover(p1, p2, puser):
-    return cal_dist_2d(p2, puser) < cal_dist_2d(p1, puser)
+    def update_pos(self, t):
+        return self.pos + np.array([0, 0, self.av*t] for i in range(self.n))
 
 
-# check whether handover successful
-def is_handover_finish(porbit, puser):
-    noise = cal_thermal_noise(1e6, 2.73)
-    recv_power = cal_recv_power()
+class LEOUE(UE):
+    def __init__(self):
+        super(UE, self).__init__(np.array([6371, np.pi/2, np.pi/2]))
+
+    def user_pos(self):
+        return to_cartesian(self.pos)
+
+
+class SDSN(object):
+    def __init__(self, i=0, t=0):
+        self.earth_station = EarthStation(np.array([[6371, np.pi/2, i*2*np.pi/3]
+                                                    for j in range(3)]))
+        self.satellites = {'l': LEOSystem(HEIGHT[i], AV[i]),
+                           'g': GeoSatellite(stations=self.earth_station)}
+        self.s_comm = SatelliteComm(self.satellites)
+        self.ue = LEOUE()
+        self.is_handover = False
+        self.is_success = False
+        self.sdsn_latency = 0
+        self.no_latency = 0
+        self.handover_t = t
+
+    def begin_handover(self):
+        th = (np.pi/12) / self.satellites['l'].av
+        self.satellites['l'].update_pos(th+self.handover_t)
+
+    # check handover status
+    def check_handover(self):
+        if self.is_handover and self.is_success:
+            self.is_handover = False
+        return self.is_handover
+
+    # check whether handover successful
+    def is_handover_finish(s_comm, satellite, puser):
+        t, rp = s_comm.comm_ue(satellite, puser, 1)
+        return rp
+
+
+def main():
+    for i in range(10000):
+        rp.append(is_handover_finish(s_comm, {'l': 1}, ue))
+    rp = np.array(rp)
+    rp_cdf = scipy.stats.rv_discrete.cdf(rp)
+    plt.plot(np.linspace(np.min(rp), np.max(rp), 1000), rp_cdf)
+    plt.show()
+
+
+if __name__ == '__main__':
+    main()

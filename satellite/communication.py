@@ -22,8 +22,8 @@ class SatelliteComm(object):
         for key, ss in self.satellites.iteritems():
             self.earth_stations[key] = ss.stations
 
-    def update_pos(self, t):
-        pass
+    def update_pos(self, *args):
+        self.satellites.update_pos(*args)
 
     def intra_comm(self, start, dest, comm_t=INTRA_COMM):
         """
@@ -149,4 +149,4 @@ class SatelliteComm(object):
                             fading_func=gen_rician, fading_args=[10, 1],
                             shadowing_func=gen_logNshadowing, shadowing_args=[4])
         throughput = cal_shannon_cap(bw, rp, noise=noise)
-        return throughput
+        return throughput, rp
