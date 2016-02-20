@@ -30,7 +30,7 @@ class Satellite(object):
     """
     The class for creating a satellite system.  It is assumed that all satellites have a circular orbit.
     """
-    def __init__(self, n=0, kes=None, antennas=None, intra_bw=0, earth_bw=0, init_pos=None, stations=None):
+    def __init__(self, n=0, kes=None, antennas=None, intra_bw=1, earth_bw=1, init_pos=None, stations=None):
         """
         Kwargs:
         kes (list): array of Kepler elements of kes

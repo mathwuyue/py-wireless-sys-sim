@@ -130,23 +130,23 @@ class SatelliteComm(object):
         bw = self.satellites[ss_idx].earth_bw
         f = self.satellites[ss_idx].get_antenna_param(s_idx, 'earth_f')
         if comm_t == UPLINK:
-            noise = cal_thermal_noise(bw, 2.73)
+            noise = cal_thermal_noise(bw*1e6, 2.73)
             tp = ue.tp
             tr_pos = ue.pos
             rv_pos = s_pos
             gt = 0
             gr = self.satellites[ss_idx].get_antenna_param(s_idx, 'gain')
         else:
-            noise = cal_thermal_noise(bw, 290)
+            noise = cal_thermal_noise(bw*1e6, 290.0)
             tp = self.satellites[ss_idx].get_antenna_param(s_idx, 'max_tp')
             tr_pos = s_pos
             rv_pos = ue.pos
             gt = self.satellites[ss_idx].get_antenna_param(s_idx, 'gain')
             gr = 0
-        rp = cal_recv_power(tr_pos, rv_pos, 10**(tp/10), 1, 1,
+        rp = cal_recv_power(tr_pos, rv_pos, 10**(tp/10.0), 1, 1,
                             dist_func=cal_dist_3d, dist_args=[],
                             pl_func=cal_fiirs, pl_args=[f, gt, gr],
-                            fading_func=gen_rician, fading_args=[10, 1],
-                            shadowing_func=gen_logNshadowing, shadowing_args=[4])
-        throughput = cal_shannon_cap(bw, rp, noise=noise)
+                            fading_func=gen_rician, fading_args=[10.0, 1.0],
+                            shadowing_func=gen_logNshadowing, shadowing_args=[4.0])
+        throughput = cal_shannon_cap(bw, rp, ip=0, noise=noise)
         return throughput, rp

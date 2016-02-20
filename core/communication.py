@@ -45,7 +45,7 @@ def cal_SINR(sp, ip, noise):
     return sp / (ip+noise)
 
 
-def cal_shannon_cap(bw, sp, ip=0, noise=0):
+def cal_shannon_cap(bw, sp, ip, noise):
     sinr = cal_SINR(sp, ip, noise)
     return bw * np.log2(1+sinr)
 

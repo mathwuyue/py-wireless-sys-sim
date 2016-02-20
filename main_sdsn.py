@@ -15,6 +15,7 @@ PB_P = 0.08
 R_H = 7800*8
 R_RE = 15000*8
 R_H_SDN = 1500*8
+COMM_THRESHOLD = 6e-18
 
 
 class LEOSystem(Satellite):
@@ -26,12 +27,12 @@ class LEOSystem(Satellite):
         self.antennas = [SatelliteAntenna(27.5, 6, 30, 0, 4.2) for i in range(self.n)]
 
     def update_pos(self, t):
-        return self.pos + np.array([0, 0, self.av*t] for i in range(self.n))
+        return self.pos + np.array([[0, 0, self.av*t] for i in range(self.n)])
 
 
 class LEOUE(UE):
     def __init__(self):
-        super(UE, self).__init__(np.array([6371, np.pi/2, np.pi/2]))
+        super(LEOUE, self).__init__(np.array([6371, np.pi/2, np.pi/2]))
 
     def user_pos(self):
         return to_cartesian(self.pos)
@@ -55,26 +56,29 @@ class SDSN(object):
         th = (np.pi/12) / self.satellites['l'].av
         self.satellites['l'].update_pos(th+self.handover_t)
 
+    def handover_process(self):
+        # hard handover
+        throughput, rp = self.s_comm.comm_ue({'l': 1}, self.ue, 1)
+        if rp > COMM_THRESHOLD:
+            self.is_success = True
+            return self.is_success
+
     # check handover status
     def check_handover(self):
         if self.is_handover and self.is_success:
             self.is_handover = False
         return self.is_handover
 
-    # check whether handover successful
-    def is_handover_finish(s_comm, satellite, puser):
-        t, rp = s_comm.comm_ue(satellite, puser, 1)
-        return rp
-
 
 def main():
-    for i in range(10000):
-        rp.append(is_handover_finish(s_comm, {'l': 1}, ue))
-    rp = np.array(rp)
-    rp_cdf = scipy.stats.rv_discrete.cdf(rp)
-    plt.plot(np.linspace(np.min(rp), np.max(rp), 1000), rp_cdf)
-    plt.show()
-
+    failed_times = np.zeros(6)
+    for i in range(6):
+        sdsn_sim = SDSN(i)
+        sdsn_sim.begin_handover()
+        for j in range(10000):
+            if not sdsn_sim.handover_process():
+                failed_times[i] = failed_times[i] + 1
+    print failed_times
 
 if __name__ == '__main__':
     main()
