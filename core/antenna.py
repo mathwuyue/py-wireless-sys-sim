@@ -27,7 +27,7 @@ class ParabolicAntenna(Antenna):
         super(ParabolicAntenna, self).__init__(f, max_tp=max_tp)
         self.c = 3.0e8
         self.d = d
-        self.gain = (np.pi*d*f*1.0e9/self.c)**2 * ea
+        self.gain = 10*np.log10((np.pi*d*f*1.0e9/self.c)**2 * ea)
         self.theta_3db = (k*self.c/(f*1e9*d))/d
 
     def __getitem__(self, key):

@@ -61,23 +61,24 @@ class SatelliteComm(object):
                 gt = np.append(gt, s.get_antenna_param(idx, 'gain'))
             else:
                 s = self.satellites[key].stations
-                tr_pos = np.append(tr_pos, s.stations.station_pos(idx), axis=0)
-                f = np.append(f, s.stations.get_antenna_param(idx, 'f'))
-                bw = np.append(bw, s.stations.bw*np.ones(len(idx)))
-                tp = np.append(tp, s.stations.get_antenna_param(idx, 'max_tp'))
-                gt = np.append(gt, s.stations.get_antenna_param(idx, 'gain'))
+                tr_pos = np.append(tr_pos, s.station_pos(idx), axis=0)
+                f = np.append(f, s.get_antenna_param(idx, 'f'))
+                bw = np.append(bw, s.bw*np.ones(len(idx)))
+                tp = np.append(tp, s.get_antenna_param(idx, 'max_tp'))
+                gt = np.append(gt, s.get_antenna_param(idx, 'gain'))
             n = n + len(idx)
         for key, idx in dest.iteritems():
-            if comm_t == INTRA_COMM or UPLINK:
+            if comm_t == INTRA_COMM or comm_t == UPLINK:
                 e = self.satellites[key]
                 rv_pos = np.append(rv_pos, e.satellite_pos(idx), axis=0)
                 gr = np.append(gr, e.get_antenna_param(idx, 'gain'))
             else:
                 e = self.satellites[key].stations
-                rv_pos = np.append(rv_pos, e.stations.station_pos(idx), axis=0)
-                gr = np.append(gr, e.sations.get_antenna_param(idx, 'gain'))
+                rv_pos = np.append(rv_pos, e.station_pos(idx), axis=0)
+                gr = np.append(gr, e.get_antenna_param(idx, 'gain'))
         tr_pos = tr_pos[1:, :]
         rv_pos = rv_pos[1:, :]
+        #print tr_pos, rv_pos
         rp = cal_recv_power(tr_pos, rv_pos, 10**(tp/10), n, 1,
                             dist_func=cal_dist_3d, dist_args=[],
                             pl_func=cal_fiirs, pl_args=[f, gt, gr],
@@ -87,7 +88,7 @@ class SatelliteComm(object):
             noise = cal_thermal_noise(bw*1e6, 2.73)
         else:
             noise = cal_thermal_noise(bw*1e6, 290)
-        throughput = cal_shannon_cap(bw*1e6, rp, noise=noise)
+        throughput = cal_shannon_cap(bw*1e6, rp, 0, noise=noise)
         return throughput
 
     def choose_satellite(self, ss_idx, ue_pos):

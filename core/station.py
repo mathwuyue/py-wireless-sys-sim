@@ -6,7 +6,7 @@ from antenna import ParabolicAntenna
 class Station(object):
     def __init__(self, pos, bw, tp, n_channel=1, height=0, antenna=None):
         self.bw = bw
-        self.pos = pos,
+        self.pos = np.array(pos)
         self.height = height
         self.n_channel = n_channel
         if n_channel > 1 and (type(tp) is int or tp.shape == ()):
