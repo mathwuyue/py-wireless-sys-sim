@@ -149,5 +149,5 @@ class SatelliteComm(object):
                             pl_func=cal_fiirs, pl_args=[f, gt, gr],
                             fading_func=gen_rician, fading_args=[10.0, 1.0],
                             shadowing_func=gen_logNshadowing, shadowing_args=[4.0])
-        throughput = cal_shannon_cap(bw, rp, ip=0, noise=noise)
+        throughput = cal_shannon_cap(bw*1e6, rp, ip=0, noise=noise)
         return throughput, rp

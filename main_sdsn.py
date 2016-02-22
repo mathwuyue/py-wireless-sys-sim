@@ -7,6 +7,7 @@ G = 6.67e-11
 M_EARTH = 5.97e24
 DELTA_T = 1e-3
 HEIGHT = (np.linspace(160, 2000, 8) + 6371) * 1e3
+T_TOLERANT = [0, 0.25, 0.5]
 AV = np.sqrt(G*M_EARTH/(HEIGHT**3))
 LOOP = 10000
 R_RE = 1500*8.0
@@ -177,6 +178,8 @@ def main():
     print sdsn_failed_times
     print hard_first_times
     print sdsn_first_times
+    print i_hard
+    print i_sdsn
 
     hard_mean_latency = hard_latency / i_hard
     sdsn_mean_latency = sdsn_latency / i_sdsn
