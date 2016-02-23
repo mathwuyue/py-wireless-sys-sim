@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 import matplotlib.pyplot as plt
 from satellite import Satellite, SatelliteComm, GeoSatellite
 from core import EarthStation, SatelliteAntenna, UE, to_cartesian
@@ -7,7 +8,7 @@ G = 6.67e-11
 M_EARTH = 5.97e24
 DELTA_T = 1e-3
 HEIGHT = (np.linspace(160, 2000, 8) + 6371) * 1e3
-T_TOLERANT = [0, 0.25, 0.5]
+T_TOLERANT = [-60, 0, 60]
 AV = np.sqrt(G*M_EARTH/(HEIGHT**3))
 LOOP = 10000
 R_RE = 1500*8.0
@@ -144,35 +145,36 @@ class SDSN(object):
 
 
 def main():
-    hard_failed_times = np.zeros(8)
-    sdsn_failed_times = np.zeros(8)
-    hard_first_times = np.zeros(8)
-    sdsn_first_times = np.zeros(8)
-    hard_latency = np.zeros(8)
-    sdsn_latency = np.zeros(8)
-    i_hard = np.zeros(8)
-    i_sdsn = np.zeros(8)
-    for i in range(8):
-        for j in range(LOOP):
-            sdsn_sim = SDSN(i)
-            sdsn_sim.begin_handover()
-            sdsn_sim.handover_process()
-            h, hf, s, sf = sdsn_sim.get_handover_status()
-            hl, sl = sdsn_sim.get_latency()
-            if not h:
-                hard_failed_times[i] = hard_failed_times[i] + 1
-            else:
-                hard_latency[i] = hard_latency[i] + hl
-                i_hard[i] = i_hard[i] + 1
-            if not hf:
-                hard_first_times[i] = hard_first_times[i] + 1
-            if not s:
-                sdsn_failed_times[i] = sdsn_failed_times[i] + 1
-            else:
-                sdsn_latency[i] = sdsn_latency[i] + sl
-                i_sdsn[i] = i_sdsn[i] + 1
-            if not sf:
-                sdsn_first_times[i] = sdsn_first_times[i] + 1
+    hard_failed_times = np.zeros([3, 8])
+    sdsn_failed_times = np.zeros([3, 8])
+    hard_first_times = np.zeros([3, 8])
+    sdsn_first_times = np.zeros([3, 8])
+    hard_latency = np.zeros([3, 8])
+    sdsn_latency = np.zeros([3, 8])
+    i_hard = np.zeros([3, 8])
+    i_sdsn = np.zeros([3, 8])
+    for k in range(3):
+        for i in range(8):
+            for j in range(LOOP):
+                sdsn_sim = SDSN(i, T_TOLERANT[k])
+                sdsn_sim.begin_handover()
+                sdsn_sim.handover_process()
+                h, hf, s, sf = sdsn_sim.get_handover_status()
+                hl, sl = sdsn_sim.get_latency()
+                if not h:
+                    hard_failed_times[k, i] = hard_failed_times[k, i] + 1
+                else:
+                    hard_latency[k, i] = hard_latency[k, i] + hl
+                    i_hard[k, i] = i_hard[k, i] + 1
+                if not hf:
+                    hard_first_times[k, i] = hard_first_times[k, i] + 1
+                if not s:
+                    sdsn_failed_times[k, i] = sdsn_failed_times[k, i] + 1
+                else:
+                    sdsn_latency[k, i] = sdsn_latency[k, i] + sl
+                    i_sdsn[k, i] = i_sdsn[k, i] + 1
+                if not sf:
+                    sdsn_first_times[k, i] = sdsn_first_times[k, i] + 1
 
     print hard_failed_times
     print sdsn_failed_times
@@ -181,12 +183,27 @@ def main():
     print i_hard
     print i_sdsn
 
-    hard_mean_latency = hard_latency / i_hard
-    sdsn_mean_latency = sdsn_latency / i_sdsn
-    print hard_mean_latency, sdsn_mean_latency
-    hard_curve = plt.plot(np.linspace(160, 2000, 8), hard_mean_latency, label='Hard, t=0')
-    sdsn_curve = plt.plot(np.linspace(160, 2000, 8), sdsn_mean_latency, label='SDSN, t=0')
+    hard_mean_latency = hard_latency / i_hard * 1000.0
+    sdsn_mean_latency = sdsn_latency / i_sdsn * 1000.0
+    with open('sdsn.pkl', 'w') as f:
+        pickle.dump({'hard_failed_times': hard_failed_times,
+                     'sdsn_failed_times': sdsn_failed_times,
+                     'hard_first_times': hard_first_times,
+                     'sdsn_first_times': sdsn_first_times,
+                     'i_hard': i_hard,
+                     'i_sdsn': i_sdsn,
+                     'hard_mean_latency': hard_mean_latency,
+                     'sdsn_mean_latency': sdsn_mean_latency},
+                    f)
+    x = np.linspace(160, 2000, 8)
+    plt.plot(x, hard_mean_latency[0, :], '-o', linewidth=2, label='Hard, t=0')
+    plt.plot(x, sdsn_mean_latency[0, :], '--o', linewidth=2, label='SDSN, t=0')
+    plt.plot(x, hard_mean_latency[1, :], '-x', linewidth=2, label='Hard, t=250')
+    plt.plot(x, sdsn_mean_latency[1, :], '--x', linewidth=2, label='SDSN, t=250')
+    plt.plot(x, hard_mean_latency[2, :], '-^', linewidth=2, label='Hard, t=500')
+    plt.plot(x, sdsn_mean_latency[2, :], '--^', linewidth=2, label='SDSN, t=500')
     plt.legend()
+    plt.savefig('sdsn_latency.eps', format='eps')
     plt.show()
 
 if __name__ == '__main__':
