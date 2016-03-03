@@ -112,7 +112,7 @@ class SatelliteComm(object):
         else:
             return np.argmin(s_pos-ue_pos_cart)
 
-    def comm_ue(self, satellite, ue, comm_t):
+    def comm_ue(self, satellite, ue, angle, comm_t):
         """
         Args:
         satellite (list of tuple): {'s1': [1,2,..])
@@ -136,13 +136,13 @@ class SatelliteComm(object):
             tr_pos = ue.pos
             rv_pos = s_pos
             gt = 0
-            gr = self.satellites[ss_idx].get_antenna_param(s_idx, 'gain')
+            gr = self.satellites[ss_idx].cal_antenna_gain(s_idx, angle)
         else:
             noise = cal_thermal_noise(bw*1e6, 290.0)
             tp = self.satellites[ss_idx].get_antenna_param(s_idx, 'max_tp')
             tr_pos = s_pos
             rv_pos = ue.pos
-            gt = self.satellites[ss_idx].get_antenna_param(s_idx, 'gain')
+            gt = self.satellites[ss_idx].cal_antenna_gain(s_idx, angle)
             gr = 0
         rp = cal_recv_power(tr_pos, rv_pos, 10**(tp/10.0), 1, 1,
                             dist_func=cal_dist_3d, dist_args=[],

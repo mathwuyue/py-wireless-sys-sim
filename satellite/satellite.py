@@ -88,6 +88,16 @@ class Satellite(object):
         else:
             return np.array([self.antennas[i][param] for i in idx])
 
+    def cal_antenna_gain(self, idx=None, angle=None):
+        if self.pos is None:
+            return None
+        if type(idx) is np.int64 or type(idx) is int:
+            return self.antennas[idx].cal_gain(angle)
+        if idx is None:
+            return np.array([a.cal_gain(b) for a, b in zip(self.antennas, angle)])
+        else:
+            return np.array([self.antennas[i].cal_gain(angle[i]) for i in idx])
+
     def get_satellite_topo(self):
         pass
 

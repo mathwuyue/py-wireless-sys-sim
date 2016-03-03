@@ -46,6 +46,18 @@ class SatelliteAntenna(Antenna):
     def __getitem__(self, key):
         return self.__dict__[key]
 
+    def cal_gain(self, angle):
+        if angle < np.pi/180:
+            return self.gain
+        elif angle < np.pi/60:
+            return self.gain/2.0
+        elif angle < np.pi/6:
+            return self.gain/100.0
+        elif angle < np.pi/3:
+            return self.gain/1000.0
+        else:
+            return self.gain/100.0
+
 
 class LTEBSAntenna(Antenna):
     def __init__(self, f=2.4, gain=18.0, theta_3db=np.pi/18, phi_3db=7*np.pi/18, etilt=np.pi/12, max_tp=16.0):
