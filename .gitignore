@@ -58,3 +58,11 @@ target/
 
 # emacs
 *~
+
+# results
+*.csv
+*.eps
+*.m
+
+# ipython book
+*.ipynb
