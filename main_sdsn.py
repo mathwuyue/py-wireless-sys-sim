@@ -30,6 +30,9 @@ class LEOSystem(Satellite):
     def update_pos(self, t):
         return self.pos + np.array([[0, 0, self.av*t] for i in range(self.n)])
 
+    def reset_pos(self):
+        self.pos = np.array([[height, np.pi/2, np.pi/2-i*np.pi/6] for i in range(self.n)])
+
 
 class LEOUE(UE):
     def __init__(self, user_loc):
@@ -66,6 +69,10 @@ class SDSN(object):
         th = (np.pi/12) / self.satellites['l'].av
         self.satellites['l'].update_pos(th+self.handover_t)
 
+    def is_handover(self):
+        if self.satellites['l'].pos[0, 2] > 7*np.pi/12:
+            return true
+
     def handover_process(self):
         # hard handover
         throughput, rp = self.s_comm.comm_ue({'l': 1}, self.ue, self.angle, 1)
@@ -91,7 +98,7 @@ class SDSN(object):
         if rp > COMM_THRESHOLD:
             self.is_sdsn_first = True
             self.is_sdsn_success = True
-            self._cal_sdsn_latency()
+            # self._cal_sdsn_latency()
         else:
             while True:
                 throughput, rp = self.s_comm.comm_ue({'l': 0}, self.ue, self.angle, 1)
@@ -101,12 +108,12 @@ class SDSN(object):
                     self.is_out_of_region = True
                     break
                 self.satellites['l'].update_pos(T_RETRY)
-                self.sdsn_latency = self.sdsn_latency + T_RETRY
+                # self.sdsn_latency = self.sdsn_latency + T_RETRY
                 throughput, rp = self.s_comm.comm_ue({'l': 1}, self.ue, self.angle, 1)
                 if rp > COMM_THRESHOLD:
                     self.is_sdsn_first = True
                     self.is_sdsn_success = True
-                    self._cal_sdsn_latency()
+                    # self._cal_sdsn_latency()
                     break
             # second try
             if not self.is_sdsn_success and not self.is_out_of_region:
@@ -115,7 +122,7 @@ class SDSN(object):
                 throughput, rp = self.s_comm.comm_ue({'l': 1}, self.ue, self.angle, 1)
                 if rp > COMM_THRESHOLD:
                     self.is_sdsn_success = True
-                    self._cal_hard_latency()
+                    # self._cal_hard_latency()
 
     # check handover status
     def get_handover_status(self):
@@ -151,6 +158,13 @@ class SDSN(object):
         throughput = self.s_comm.intra_comm(start={'g': [1]}, dest={'l': [1]})
         self.sdsn_latency = self.sdsn_latency + SDN_PACKET/throughput
 
+    def reset_leo(self):
+        self.satellites['l'].reset_pos()
+
+    def data_transmission(self, satellite, comm_t, t):
+        throughput, rp = self.s_comm.comm_ue(satellite, self.ue, self.angle, comm_t)
+        return throughput
+
 
 def main():
     hard_failed_times = np.zeros([3, 8])
@@ -184,17 +198,37 @@ def main():
                 if not sf:
                     sdsn_first_times[k, i] = sdsn_first_times[k, i] + 1
 
-    print hard_failed_times
-    print sdsn_failed_times
-    print hard_first_times
-    print sdsn_first_times
-    print i_hard
-    print i_sdsn
-
     hard_mean_latency = hard_latency / i_hard * 1000.0
     sdsn_mean_latency = sdsn_latency / i_sdsn * 1000.0
     hard_score = 1-np.exp(-1.0/hard_mean_latency)-0.1*hard_first_times/10000-0.1*hard_failed_times/10000
     sdsn_score = 1-np.exp(-1.0/sdsn_mean_latency)-0.1*sdsn_first_times/10000-0.1*sdsn_failed_times/10000
+
+    # 1000 1500 bytes
+    sdsn_throughput = np.zeros([3, 8])
+    hard_throughput = np.zeros([3, 8])
+    total_bits = 10000*1500*8
+    for i in range(3):
+        for j in range(8):
+            sdsn_sim = SDSN(i, T_REGION[k], UE_LOC[k])
+            transmit_bits = 0
+            t = 0
+            ht = np.pi/6/AV[j]
+            while transmit_bits < total_bits:
+                t = t + 1e-3
+                tb = sdsn_sim.data_transmission({'l': 0}, 2, 1e-3)
+                transmit_bits = transmit_bits + tb * 1e-3
+                if sdsn_sim.is_handover():
+                    sdsn_sim.reset_leo()
+            n_handover = t / ht
+            # hard
+            t_hard = t +\
+                     hard_failed_times[i, j]*0.75*n_handover/LOOP +\
+                     (LOOP-hard_failed_times[i, j])*hard_mean_latency[i, j]/LOOP*n_handover
+            t_sdsn = t +\
+                     sdsn_failed_times[i, j]*0.75*n_handover/LOOP +\
+                     (LOOP-sdsn_failed_times[i, j])*sdsn_mean_latency[i, j]/LOOP*n_handover
+            sdsn_throughput[i, j] = 10000*1500*8 / t_sdsn
+            hard_throughput[i, j] = 10000*1500*8 / t_hard
 
     with open('score.csv', 'wb') as f:
         dw = csv.writer(f, delimiter=' ')
@@ -220,17 +254,23 @@ def main():
             dw.writerow(hard_first_times[i, :])
         for i in range(3):
             dw.writerow(sdsn_first_times[i, :])
+    with open('throughput.csv', 'wb') as f:
+        dw = csv.writer(f, delimiter=' ')
+        for i in range(3):
+            dw.writerow(hard_throughput[i, :])
+        for i in range(3):
+            dw.writerow(sdsn_throughput[i, :])
 
-    x = np.linspace(160, 2000, 8)
-    plt.plot(x, hard_mean_latency[0, :], '-o', linewidth=2, label='Hard, t=0')
-    plt.plot(x, sdsn_mean_latency[0, :], '--o', linewidth=2, label='SDSN, t=0')
-    plt.plot(x, hard_mean_latency[1, :], '-x', linewidth=2, label='Hard, t=250')
-    plt.plot(x, sdsn_mean_latency[1, :], '--x', linewidth=2, label='SDSN, t=250')
-    plt.plot(x, hard_mean_latency[2, :], '-^', linewidth=2, label='Hard, t=500')
-    plt.plot(x, sdsn_mean_latency[2, :], '--^', linewidth=2, label='SDSN, t=500')
-    plt.legend()
-    plt.savefig('sdsn_latency.eps', format='eps')
-    plt.show()
+    # x = np.linspace(160, 2000, 8)
+    # plt.plot(x, hard_mean_latency[0, :], '-o', linewidth=2, label='Hard, t=0')
+    # plt.plot(x, sdsn_mean_latency[0, :], '--o', linewidth=2, label='SDSN, t=0')
+    # plt.plot(x, hard_mean_latency[1, :], '-x', linewidth=2, label='Hard, t=250')
+    # plt.plot(x, sdsn_mean_latency[1, :], '--x', linewidth=2, label='SDSN, t=250')
+    # plt.plot(x, hard_mean_latency[2, :], '-^', linewidth=2, label='Hard, t=500')
+    # plt.plot(x, sdsn_mean_latency[2, :], '--^', linewidth=2, label='SDSN, t=500')
+    # plt.legend()
+    # plt.savefig('sdsn_latency.eps', format='eps')
+    # plt.show()
 
 if __name__ == '__main__':
     main()
