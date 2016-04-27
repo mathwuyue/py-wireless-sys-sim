@@ -32,7 +32,7 @@ class LEOSystem(Satellite):
         return self.pos + np.array([[0, 0, self.av*t] for i in range(self.n)])
 
     def reset_pos(self):
-        self.pos = np.array([[height, np.pi/2, np.pi/2-i*np.pi/6] for i in range(self.n)])
+        self.pos = np.array([[self.height, np.pi/2, np.pi/2-i*np.pi/6] for i in range(self.n)])
 
 
 class LEOUE(UE):
@@ -217,7 +217,6 @@ class SDSN(object):
             self.casd_latency = self.casd_latency + H_IP / throughput
             throughput, rp = self.s_comm.comm_ue({'l': 1}, self.ue, self.angle, 2)
             self.casd_latency = self.casd_latency + H_IP / throughput
-
 
     def _cal_sdsn_latency(self):
         # ue -> leo

@@ -62,7 +62,8 @@ target/
 # results
 *.csv
 *.eps
-*.m
+*.mat
+*.pkl
 
 # ipython book
 *.ipynb
