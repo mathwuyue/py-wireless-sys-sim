@@ -1,6 +1,6 @@
 import numpy as np
-from .position import to_cartesian
-from .antenna import ParabolicAntenna
+from position import to_cartesian
+from antenna import ParabolicAntenna
 
 
 class Station(object):

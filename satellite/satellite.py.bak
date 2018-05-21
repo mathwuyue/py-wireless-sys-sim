@@ -117,7 +117,7 @@ class IridiumSatellite(Satellite):
         if self.topo is not None:
             return self.topo
         self.topo = nx.Graph()
-        self.topo.add_nodes_from(list(range(66)))
+        self.topo.add_nodes_from(range(66))
         for i in range(66):
             if i % 11 != 0:
                 self.topo.add_edge(i-1, i)

@@ -45,11 +45,11 @@ def cal_dist_3d(p1, p2):
     if len(p1.shape) == 1 and len(p2.shape) == 1:
         return euclidean(p1, p2)
     elif len(p1.shape) == 1:
-        return np.array([euclidean(x, p1) for x in p2])
+        return np.array(map(lambda x: euclidean(x, p1), p2))
     elif len(p2.shape) == 1:
-        return np.array([euclidean(x, p2) for x in p1])
+        return np.array(map(lambda x: euclidean(x, p2), p1))
     else:
-        return np.array(list(map(euclidean, p1, p2)))
+        return np.array(map(euclidean, p1, p2))
 
 
 def to_cartesian(ps):

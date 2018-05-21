@@ -1,7 +1,7 @@
 import numpy as np
-from .satellite.communication import SatelliteComm, INTRA_COMM, UPLINK, DOWNLINK
-from .satellite.satellite import IridiumSatellite, GeoSatellite, EarthStation
-from .core.device import UE
+from satellite.communication import SatelliteComm, INTRA_COMM, UPLINK, DOWNLINK
+from satellite.satellite import IridiumSatellite, GeoSatellite, EarthStation
+from core.ue import UE
 import matplotlib.pyplot as plt
 import networkx as nx
 import warnings
@@ -75,15 +75,15 @@ def leo_sim():
             t3 = s_comm.comm_ue({'leo': s2}, ue2[i-1], DOWNLINK)
             t.append(min(t1, t2, t3))
     except Warning:
-        print(s1)
-        print(s2)
-        print(start)
-        print(end)
+        print s1
+        print s2
+        print start
+        print end
     return np.array(t)
 
 
 def get_satellite_comm_topo(topo):
-    start, end = list(zip(*(topo.edges())))
+    start, end = zip(*(topo.edges()))
     edge_rates = s_comm.intra_comm({'leo': start}, {'leo': end}, INTRA_COMM)
     for (u, v), er in zip(topo.edges(), edge_rates):
         topo[u][v]['capacity'] = er
@@ -113,7 +113,7 @@ def main():
     leo_sdn_throughput = np.zeros(6)
     loop = 1000
 
-    for i in range(loop):
+    for i in xrange(loop):
         geo_throughput = geo_throughput + geo_sim()
         leo_throughput = leo_throughput + leo_sim()
         leo_sdn_throughput = leo_sdn_throughput + leo_sdn_sim()

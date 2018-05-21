@@ -15,7 +15,7 @@ class D2DSystemModel(object):
         self.n_pairs = n_pairs
         self.gen_cc_ues(n_cc)
         self.gen_d2d_pairs(n_pairs)
-        self.bs = BS(0)
+        self.bs = BS(0, n_cc)
         self.total_bw = total_bw
 
     def gen_cc_ues(self, n_cc):
@@ -76,7 +76,7 @@ class D2DSystemModel(object):
     def cal_throughput(self, idx_d2d, inter=0, method=UL):
         tr = self.d2d_tr[idx_d2d]
         rv = self.d2d_rc[idx_d2d]
-        d2d_intra = self.cal_interference(idx_d2d, list(range(self.n_cc)), method)
+        d2d_intra = self.cal_interference(idx_d2d, range(self.n_cc), method)
         bw = self.total_bw / self.n_cc
         noise = cal_thermal_noise(bw, 290.0)
         sp = cal_recv_power(tr.pos, rv.pos, 10**(tr.tp/10.0), 1, 1,
