@@ -30,7 +30,7 @@ class Satellite(object):
     """
     The class for creating a satellite system.  It is assumed that all satellites have a circular orbit.
     """
-    def __init__(self, n=0, kes=None, antennas=None, intra_bw=1, earth_bw=1, init_pos=None, stations=None):
+    def __init__(self, n=0, kes=None, antennas=None, intra_bw=0, earth_bw=0, init_pos=None, stations=None):
         """
         Kwargs:
         kes (list): array of Kepler elements of kes
@@ -88,16 +88,6 @@ class Satellite(object):
         else:
             return np.array([self.antennas[i][param] for i in idx])
 
-    def cal_antenna_gain(self, idx=None, angle=None):
-        if self.pos is None:
-            return None
-        if type(idx) is np.int64 or type(idx) is int:
-            return self.antennas[idx].cal_gain(angle)
-        if idx is None:
-            return np.array([a.cal_gain(b) for a, b in zip(self.antennas, angle)])
-        else:
-            return np.array([self.antennas[i].cal_gain(angle[i]) for i in idx])
-
     def get_satellite_topo(self):
         pass
 
@@ -127,7 +117,7 @@ class IridiumSatellite(Satellite):
         if self.topo is not None:
             return self.topo
         self.topo = nx.Graph()
-        self.topo.add_nodes_from(list(range(66)))
+        self.topo.add_nodes_from(range(66))
         for i in range(66):
             if i % 11 != 0:
                 self.topo.add_edge(i-1, i)

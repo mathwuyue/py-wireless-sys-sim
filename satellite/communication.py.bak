@@ -19,7 +19,7 @@ class SatelliteComm(object):
         """
         self.satellites = satellite_system
         self.earth_stations = {}
-        for key, ss in self.satellites.items():
+        for key, ss in self.satellites.iteritems():
             self.earth_stations[key] = ss.stations
 
     def update_pos(self, *args):
@@ -44,7 +44,7 @@ class SatelliteComm(object):
         bw = np.array([])
         tp = np.array([])
         n = 0
-        for key, idx in start.items():
+        for key, idx in start.iteritems():
             if comm_t == INTRA_COMM:
                 s = self.satellites[key]
                 tr_pos = np.append(tr_pos, s.satellite_pos(idx), axis=0)
@@ -61,24 +61,23 @@ class SatelliteComm(object):
                 gt = np.append(gt, s.get_antenna_param(idx, 'gain'))
             else:
                 s = self.satellites[key].stations
-                tr_pos = np.append(tr_pos, s.station_pos(idx), axis=0)
-                f = np.append(f, s.get_antenna_param(idx, 'f'))
-                bw = np.append(bw, s.bw*np.ones(len(idx)))
-                tp = np.append(tp, s.get_antenna_param(idx, 'max_tp'))
-                gt = np.append(gt, s.get_antenna_param(idx, 'gain'))
+                tr_pos = np.append(tr_pos, s.stations.station_pos(idx), axis=0)
+                f = np.append(f, s.stations.get_antenna_param(idx, 'f'))
+                bw = np.append(bw, s.stations.bw*np.ones(len(idx)))
+                tp = np.append(tp, s.stations.get_antenna_param(idx, 'max_tp'))
+                gt = np.append(gt, s.stations.get_antenna_param(idx, 'gain'))
             n = n + len(idx)
         for key, idx in dest.iteritems():
-            if comm_t == INTRA_COMM or comm_t == UPLINK:
+            if comm_t == INTRA_COMM or UPLINK:
                 e = self.satellites[key]
                 rv_pos = np.append(rv_pos, e.satellite_pos(idx), axis=0)
                 gr = np.append(gr, e.get_antenna_param(idx, 'gain'))
             else:
                 e = self.satellites[key].stations
-                rv_pos = np.append(rv_pos, e.station_pos(idx), axis=0)
-                gr = np.append(gr, e.get_antenna_param(idx, 'gain'))
+                rv_pos = np.append(rv_pos, e.stations.station_pos(idx), axis=0)
+                gr = np.append(gr, e.sations.get_antenna_param(idx, 'gain'))
         tr_pos = tr_pos[1:, :]
         rv_pos = rv_pos[1:, :]
-        #print tr_pos, rv_pos
         rp = cal_recv_power(tr_pos, rv_pos, 10**(tp/10), n, 1,
                             dist_func=cal_dist_3d, dist_args=[],
                             pl_func=cal_fiirs, pl_args=[f, gt, gr],
@@ -88,7 +87,7 @@ class SatelliteComm(object):
             noise = cal_thermal_noise(bw*1e6, 2.73)
         else:
             noise = cal_thermal_noise(bw*1e6, 290)
-        throughput = cal_shannon_cap(bw*1e6, rp, 0, noise=noise)
+        throughput = cal_shannon_cap(bw*1e6, rp, noise=noise)
         return throughput
 
     def choose_satellite(self, ss_idx, ue_pos):
@@ -112,7 +111,7 @@ class SatelliteComm(object):
         else:
             return np.argmin(s_pos-ue_pos_cart)
 
-    def comm_ue(self, satellite, ue, angle, comm_t):
+    def comm_ue(self, satellite, ue, comm_t):
         """
         Args:
         satellite (list of tuple): {'s1': [1,2,..])
@@ -126,28 +125,28 @@ class SatelliteComm(object):
         TODO: multiple UEs and satellite
         """
         # ss_idx: satellite system idx. s_idx: satellite idx in system
-        for ss_idx, s_idx in satellite.items():
+        for ss_idx, s_idx in satellite.iteritems():
             s_pos = self.satellites[ss_idx].satellite_pos(s_idx)
         bw = self.satellites[ss_idx].earth_bw
         f = self.satellites[ss_idx].get_antenna_param(s_idx, 'earth_f')
         if comm_t == UPLINK:
-            noise = cal_thermal_noise(bw*1e6, 2.73)
+            noise = cal_thermal_noise(bw, 2.73)
             tp = ue.tp
             tr_pos = ue.pos
             rv_pos = s_pos
             gt = 0
-            gr = self.satellites[ss_idx].cal_antenna_gain(s_idx, angle)
+            gr = self.satellites[ss_idx].get_antenna_param(s_idx, 'gain')
         else:
-            noise = cal_thermal_noise(bw*1e6, 290.0)
+            noise = cal_thermal_noise(bw, 290)
             tp = self.satellites[ss_idx].get_antenna_param(s_idx, 'max_tp')
             tr_pos = s_pos
             rv_pos = ue.pos
-            gt = self.satellites[ss_idx].cal_antenna_gain(s_idx, angle)
+            gt = self.satellites[ss_idx].get_antenna_param(s_idx, 'gain')
             gr = 0
-        rp = cal_recv_power(tr_pos, rv_pos, 10**(tp/10.0), 1, 1,
+        rp = cal_recv_power(tr_pos, rv_pos, 10**(tp/10), 1, 1,
                             dist_func=cal_dist_3d, dist_args=[],
                             pl_func=cal_fiirs, pl_args=[f, gt, gr],
-                            fading_func=gen_rician, fading_args=[10.0, 1.0],
-                            shadowing_func=gen_logNshadowing, shadowing_args=[4.0])
-        throughput = cal_shannon_cap(bw*1e6, rp, ip=0, noise=noise)
+                            fading_func=gen_rician, fading_args=[10, 1],
+                            shadowing_func=gen_logNshadowing, shadowing_args=[4])
+        throughput = cal_shannon_cap(bw, rp, noise=noise)
         return throughput, rp

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from satellite import Satellite, SatelliteComm, GeoSatellite
 from core import EarthStation, SatelliteAntenna, UE, to_cartesian
 
+
 G = 6.67e-11
 M_EARTH = 5.97e24
 DELTA_T = 1e-3
