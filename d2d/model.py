@@ -10,39 +10,49 @@ DL = 1
 
 
 class D2DSystemModel(object):
-    def __init__(self, n_cc, n_pairs, total_bw=10e6):
+    def __init__(self, n_cc, n_pairs, ue_tp=-10, total_bw=10e6, cell_r=250, d2d_r=20):
         self.n_cc = n_cc
         self.n_pairs = n_pairs
         self.gen_cc_ues(n_cc)
         self.gen_d2d_pairs(n_pairs)
         self.bs = BS(0)
         self.total_bw = total_bw
+        self.cell_r = cell_r
+        self.d2d_r = d2d_r
+        self.ue_tp = ue_tp
+        self.cc_ue = None
+        self.d2d_tr = None
+        self.d2d_rc = None
+
+    def __setitem__(self, key, value):
+        self.__dict__[key] = value
+        if key == 'd2d_r':
+            self.gen_d2d_pairs(self.n_pairs)
+        elif key == 'cell_r':
+            self.gen_cc_ues(self.n_cc)
+            self.gen_d2d_pairs(self.n_pairs)
 
     def gen_cc_ues(self, n_cc):
-        self.cc_ue = np.array([UE(p) for p in gen_uni_circ_pos(0, 250, n_cc)])
+        self.cc_ue = [UE(p, self.ue_tp)
+                      for p in gen_uni_circ_pos(0, self.cell_r, n_cc)]
 
     def gen_d2d_pairs(self, n_pairs):
-        d2d_tr_pos = gen_uni_circ_pos(0, 250, n_pairs)
-        self.d2d_tr = np.array([UE(p) for p in d2d_tr_pos])
-        self.d2d_rc = [UE(gen_uni_circ_pos(p, 20, 1)[0]) for p in d2d_tr_pos]
+        d2d_tr_pos = gen_uni_circ_pos(0, self.cell_r, n_pairs)
+        self.d2d_tr = [UE(p, self.ue_tp) for p in d2d_tr_pos]
+        self.d2d_rc = [UE(gen_uni_circ_pos(p, self.d2d_r, 1)[0], self.ue_tp)
+                       for p in d2d_tr_pos]
 
     def set_cc_tps(self, idx_cc, tps):
-        if not hasattr(tps, '__getitem__'):
-            tps = tps * np.ones(len(idx_cc))
         for i in idx_cc:
-            (self.cc_ue[i]).tp = tps[i]
+            self.cc_ue[i]['tp'] = tps[i]
 
     def set_d2d_tps(self, idx_d2d, tps):
-        if not hasattr(tps, '__getitem__'):
-            tps = tps * np.ones(len(idx_d2d))
         for i in idx_d2d:
-            (self.d2d_tr[i]).tp = tps[i]
+            self.d2d_tr[i]['tp'] = tps[i]
 
-    def set_bs_tps(self, idx_channel, tps):
-        if not hasattr(tps, '__getitem__'):
-            tps = tps * np.ones(len(idx_channel))
-        for i in idx_channel:
-            self.bs.tp[i] = tps[i]
+    # def set_bs_tps(self, idx_channel, tps):
+    #     for i in idx_channel:
+    #         self.bs.tp[i] = tps[i]
 
     def cal_reuse(self, idx_d2d):
         """
