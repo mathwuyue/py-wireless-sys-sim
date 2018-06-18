@@ -1,29 +1,36 @@
 import numpy as np
+import numpy.matlib
 
 
-def cal_channel_gain(tr, rv, n, n_channel,
+def cal_channel_gain(tr, rv, n_row, n_col, n_channel,
                      dist_func=None, dist_args=[],
                      pl_func=None, pl_args=[],
                      fading_func=None, fading_args=[],
                      shadowing_func=None, shadowing_args=[]):
     d = dist_func(tr, rv, *dist_args)
     pl = pl_func(d, *pl_args)
-    fading_args = fading_args + [n, n_channel] if n_channel > 1 else fading_args + [n]
+    fading_args = fading_args + [n_row, n_col]
     h = fading_func(*fading_args)
-    shadowing_args = shadowing_args + [n]
+    shadowing_args = shadowing_args + [n_row, n_col/n_channel]
     s = shadowing_func(*shadowing_args)
     return np.kron(10**((-pl+s)/10.0), np.ones(n_channel)) * (abs(h)**2)
 
 
-def cal_recv_power(tr, rv, tp, n, n_channel,
+def cal_recv_power(tr, rv, tp, n_channel,
                    dist_func, dist_args,
                    pl_func, pl_args,
                    fading_func, fading_args,
                    shadowing_func, shadowing_args):
-    if not (n_channel == 1 or
-            (hasattr(tp, '__len__') and len(tp) == n_channel)):
-        tp = np.kron(tp, np.ones(n_channel))
-    return tp * cal_channel_gain(tr, rv, n, n_channel,
+    n_row = len(tr) if hasattr(tr, '__len__') else 1
+    n_col = len(rv) * n_channel if hasattr(tr, '__len__') else n_channel
+    if n_channel != 1:
+        if type(tp) is np.ndarray:
+            tp = np.matlib.repmat(tp, 1, n_col)
+        else:
+            tp = tp * np.ones(n_row, n_col)
+    tr = np.matlib.repmat(tr, 1, len(rv))
+    rv = np.matlib.repmat(rv, n_row, 1)
+    return tp * cal_channel_gain(tr, rv, n_row, n_col, n_channel,
                                  dist_func, dist_args,
                                  pl_func, pl_args,
                                  fading_func, fading_args,
