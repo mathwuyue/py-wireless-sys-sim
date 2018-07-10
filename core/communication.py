@@ -39,7 +39,7 @@ def cal_recv_power(tr, rv, tp, n_channel,
 
 def cal_thermal_noise(bw, t):
     K = 1.3806488e-23
-    return bw*t*K
+    return bw * t * K
 
 
 def cal_SINR(sp, ip, noise):
@@ -48,12 +48,12 @@ def cal_SINR(sp, ip, noise):
     sp (float or numpy array): signal power
     ip (float or numpy array): interference power
     """
-    return sp / (ip+noise)
+    return sp / (ip + noise)
 
 
 def cal_shannon_cap(bw, sp, ip, noise):
     sinr = cal_SINR(sp, ip, noise)
-    return bw * np.log2(1+sinr)
+    return bw * np.log2(1 + sinr)
 
 
 def cal_transmission_time(throughput, packet=1e3, period=1e-3):

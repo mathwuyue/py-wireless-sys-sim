@@ -1,9 +1,11 @@
 import numpy as np
+import math
+import pygmo as pg
 from d2d.model import D2DSystemModel
-from core.communication import cal_recv_power, cal_SINR, cal_thermal_noise
+from core.communication import cal_recv_power, cal_SINR, cal_thermal_noise, cal_shannon_cap
 from core.pathloss import cal_umi_nlos
 from core.statchannel import gen_rayleigh, gen_logNshadowing
-from core.position import gen_uni_circ_pos, cal_dist_2d
+from core.position import cal_dist_2d
 
 
 class Rui2016(D2DSystemModel):
@@ -105,11 +107,43 @@ class Rui2016(D2DSystemModel):
             d_interference = d2d_interference[i, :]
             d_s = d2d_s[i, :]
             d2d_sinr = cal_SINR(d_s, d_interference, noise)
-            ak = d2d_sinr / (1+d2d_sinr)
-            bk = np.log(1+d2d_sinr) - (d2d_sinr/(1+d2d_sinr))
+            ak = d2d_sinr / (1 + d2d_sinr)
+            bk = np.log(1 + d2d_sinr) - (d2d_sinr / (1 + d2d_sinr))
             akn.append(ak)
             bkn.append(bk)
         return akn, bkn
+
+    def cal_cc_throughput(self, cc_signal_power, cc_interference):
+        bw = self.total_bw / self.n_rb * self.n_cc_rb
+        noise = cal_thermal_noise(bw, 298)
+        cc_r = []
+        for i in range(self.n_cc):
+            sp = cc_signal_power[i*self.n_cc_rb:(n+1)*self.n_cc_rb-1]
+            ip = cc_interference[i*self.n_cc_rb:(n+1)*self.n_cc_rb-1]
+            cc_r.append(cal_shannon_cap(bw, sp, ip, noise))
+        return cc_r
+
+    def fitness(self, x):
+        # Fixme: calculate akn,bkn,signal and interference here
+        obj = 0
+        for i in range(self.n_pairs):
+            for j in range(self.n_rb):
+                obj += self.akn[i][j] * x[i][j] + self.bkn[i][j]
+        ci1 = [0 for i in range(self.n_pairs)]
+        for i in range(self.n_pairs):
+            for j in range(self.n_rb):
+                ci1[i] += math.exp(x[i][j])
+        ci2 = [0 for i in range(self.n_cc)]
+
+    def get_bounds(self):
+        return ([-math.inf] * (self.n_rb * self.n_pairs),
+                [math.log(self.pmax)] * (self.n_rb * self.n_pairs))
+
+    def get_nic(self):
+        return self.n_pairs + self.n_cc
+
+    def get_nec(self):
+        return 0
 
     def run(self, **kwargs):
         # update simulation parameters
@@ -118,3 +152,4 @@ class Rui2016(D2DSystemModel):
         # start simulation
         self.gen_cc_ues(self.n_cc)
         self.gen_d2d_pairs(self.n_pairs)
+        # start optimisation
