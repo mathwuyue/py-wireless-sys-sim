@@ -13,8 +13,6 @@ class D2DSystemModel(object):
     def __init__(self, n_cc, n_pairs, ue_tp=-10, total_bw=10e6, cell_r=250, d2d_r=20):
         self.n_cc = n_cc
         self.n_pairs = n_pairs
-        self.gen_cc_ues(n_cc)
-        self.gen_d2d_pairs(n_pairs)
         self.bs = BS(0)
         self.total_bw = total_bw
         self.cell_r = cell_r
@@ -23,6 +21,8 @@ class D2DSystemModel(object):
         self.cc_ue = None
         self.d2d_tr = None
         self.d2d_rc = None
+        self.gen_cc_ues(n_cc)
+        self.gen_d2d_pairs(n_pairs)
 
     def __setitem__(self, key, value):
         self.__dict__[key] = value

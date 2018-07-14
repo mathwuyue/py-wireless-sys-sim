@@ -11,20 +11,21 @@ def cal_channel_gain(tr, rv, n_row, n_col, n_channel,
     pl = pl_func(d, *pl_args)
     fading_args = fading_args + [n_row, n_col]
     h = fading_func(*fading_args)
-    shadowing_args = shadowing_args + [n_row, n_col/n_channel]
+    shadowing_args = shadowing_args + [n_row, n_col / n_channel]
     s = shadowing_func(*shadowing_args)
     return np.kron(10**((-pl+s)/10.0), np.ones(n_channel)) * (abs(h)**2)
 
 
-def cal_recv_power(tr, rv, tp, n_channel,
+def cal_recv_power(tr, rv, tp, n_channel, is_tp4tr,
                    dist_func, dist_args,
                    pl_func, pl_args,
                    fading_func, fading_args,
                    shadowing_func, shadowing_args):
+    """ is_tp4tr: True than tp is for a tr. False is for each subchannel"""
     n_row = len(tr) if hasattr(tr, '__len__') else 1
     n_col = len(rv) * n_channel if hasattr(tr, '__len__') else n_channel
     if n_channel != 1:
-        if type(tp) is np.ndarray:
+        if type(tp) is np.ndarray and is_tp4tr:
             tp = np.matlib.repmat(tp, 1, n_col)
         else:
             tp = tp * np.ones(n_row, n_col)
