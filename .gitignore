@@ -67,3 +67,4 @@ target/
 
 # ipython book
 *.ipynb
+*.out
