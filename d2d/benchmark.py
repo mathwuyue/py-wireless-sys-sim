@@ -131,7 +131,7 @@ class Rui2016(D2DSystemModel):
         d2d_tps = np.reshape(x, (self.n_pairs, self.n_rb))
         ci1 = [0 for i in range(self.n_pairs)]
         ci2 = [0 for i in range(self.n_cc)]
-        if np.min(x) < 0:
+        if np.min(x) <= 0:
             return [np.inf] + ci1 + ci2
         cc_interference, d2d_interference = self.cal_interference(d2d_tps)
         cc_signal, d2d_signal = self.cal_signal_power(d2d_tps)
