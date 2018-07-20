@@ -110,7 +110,7 @@ class Rui2016(D2DSystemModel):
             d_s = d2d_s[i]
             d2d_sinr = cal_SINR(d_s, d_interference, noise)
             ak = d2d_sinr / (1 + d2d_sinr)
-            bk = np.log(1 + d2d_sinr) - (d2d_sinr / (1 + d2d_sinr))
+            bk = np.log(1 + d2d_sinr) - (d2d_sinr / (1 + d2d_sinr)) * np.log(d2d_sinr)
             ak = np.reshape(ak, self.n_rb)
             bk = np.reshape(bk, self.n_rb)
             akn.append(ak)
@@ -136,12 +136,12 @@ class Rui2016(D2DSystemModel):
         cc_interference, d2d_interference = self.cal_interference(d2d_tps)
         cc_signal, d2d_signal = self.cal_signal_power(d2d_tps)
         cc_throughputs = self.cal_cc_throughput(cc_signal, cc_interference)
-        self.akn, self.bkn = self.cal_ak_bk(d2d_signal, d2d_interference)
+        akn, bkn = self.cal_ak_bk(d2d_signal, d2d_interference)
         obj = 0
         logx = np.log(x)
         for i in range(self.n_pairs):
             for j in range(self.n_rb):
-                obj += -(self.akn[i][j] * logx[i*self.n_rb + j] + self.bkn[i][j])
+                obj += -(akn[i][j] * logx[i*self.n_rb + j] + bkn[i][j])
         for i in range(self.n_pairs):
             ci1[i] = np.sum(d2d_tps[i]) - self.pmax
         for i in range(self.n_cc):

@@ -5,8 +5,8 @@ from d2d.benchmark import run_rui2016
 
 def main():
     ans = run_rui2016(n_cc=5, n_pairs=5, n_rb=50, cc_qos=1)
-    ans.wait()
     print(ans.champion_x)
+    print(ans.champion_f)
 
 
 if __name__ == '__main__':
